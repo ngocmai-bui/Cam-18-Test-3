@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<title>IELTS Test 3</title>
+<style>
+body{margin:0}
+[hidden]{display:none!important}
+#ytHolder{position:fixed;left:-10000px;top:0;width:200px;height:200px;opacity:0;pointer-events:none}
+:root{
+  /* Layout: computer-delivered IELTS shell — fixed header with timer, work area (split pane for Reading/Writing), question navigator footer. Single light look, deliberately like the real test. */
+  --bg:#ffffff; --ink:#1b2430; --muted:#5b6675; --panel:#f2f4f7; --panel2:#e8ecf1; --line:#cfd6df;
+  --head:#18222f; --head-ink:#f3f5f8; --head-muted:#a9b4c2;
+  --accent:#1f5fbf; --accent-ink:#ffffff; --accent-soft:#e2ebf9;
+  --hl:#ffe46b; --warn:#c0392b; --warn-soft:#fbe9e7; --ok:#22803a; --ok-soft:#e5f3e8; --flag:#e08a00;
+  --font:Arial, "Helvetica Neue", Helvetica, sans-serif;
+  --fs:16px;
+  color-scheme: light;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);font-size:var(--fs);line-height:1.5}
+*{box-sizing:border-box}
+button{font-family:inherit;font-size:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#app{display:flex;flex-direction:column;height:100%}
+
+/* Header */
+#top{background:var(--head);color:var(--head-ink);display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));min-height:56px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .tag{background:var(--head-ink);color:var(--head);font-weight:700;padding:2px 8px;border-radius:3px;font-size:14px;letter-spacing:.06em}
+.brand .who{color:var(--head-muted);font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#timer{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;display:flex;align-items:center;gap:6px}
+#timer.low{color:#ff8a80}
+#timer small{font-weight:400;color:var(--head-muted);font-size:13px}
+.hctl{display:flex;align-items:center;gap:8px}
+.hbtn{background:transparent;color:var(--head-ink);border:1px solid #4a5868;border-radius:4px;padding:5px 10px;font-size:14px}
+.hbtn:hover{background:#263343}
+.hbtn.primary{background:var(--accent);border-color:var(--accent)}
+.hbtn.primary:hover{background:#174f9f}
+#volWrap{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--head-muted)}
+#volWrap input{width:90px;accent-color:var(--accent)}
+#audioStatus{font-size:13px;color:var(--head-muted)}
+
+/* Main */
+#main{flex:1;min-height:0;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;overflow:auto}
+.center{padding-block:40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{max-width:620px;margin:0 auto;border:1px solid var(--line);border-radius:6px;padding:28px}
+.card h1{font-size:26px;margin:0 0 4px;text-wrap:balance}
+.card h2{font-size:22px;margin:0 0 8px}
+.card p{margin:0 0 12px}
+.sub{color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:6px;margin:18px 0}
+.field label{font-weight:700;font-size:14px}
+.field input[type=text]{border:1px solid var(--line);border-radius:4px;padding:10px 12px;font-size:16px}
+.secs{list-style:none;padding:0;margin:16px 0;border-top:1px solid var(--line)}
+.secs li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.secs li span:last-child{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:4px;padding:11px 22px;font-weight:700}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.note{background:var(--panel);border-left:4px solid var(--accent);padding:10px 14px;margin:14px 0;font-size:14px}
+.note.warn{border-color:var(--warn);background:var(--warn-soft)}
+.filebox{border:1px dashed var(--line);border-radius:6px;padding:14px;margin:12px 0;background:var(--panel)}
+.filebox input{max-width:100%}
+#audioInfo{font-size:14px;color:var(--muted);margin-top:6px}
+
+/* Exam sections */
+.sec{position:absolute;inset:0}
+.part{position:absolute;inset:0;display:flex}
+.pane{overflow:auto;min-width:0}
+.single{flex:1;padding-block:20px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.single > .inner{max-width:860px;margin:0 auto}
+.split .left{flex:0 0 50%;padding:20px 22px 40px max(16px,env(safe-area-inset-left,0px));background:var(--bg)}
+.split .right{flex:1;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px 22px;background:var(--panel)}
+.divider{flex:0 0 10px;background:var(--panel2);cursor:col-resize;position:relative;touch-action:none}
+.divider::after{content:"";position:absolute;left:3px;top:50%;width:4px;height:40px;margin-top:-20px;border-left:2px dotted var(--muted);border-right:2px dotted var(--muted)}
+.partbar{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px 14px;margin-bottom:18px}
+.partbar b{display:block}
+.partbar span{color:var(--muted);font-size:14px}
+
+.inst{margin:22px 0 10px}
+.inst:first-child{margin-top:0}
+.inst h3{font-size:1em;margin:0 0 4px}
+.inst p{margin:0 0 2px}
+.passage h2{font-size:1.35em;margin:6px 0 4px;text-align:center;text-wrap:balance}
+.passage .standfirst{font-style:italic;text-align:center;margin:0 0 16px;color:var(--muted)}
+.passage p{margin:0 0 12px;max-width:72ch}
+.passage .para{display:grid;grid-template-columns:28px 1fr;gap:4px}
+.passage .para > b{padding-top:0}
+
+.qnum{display:inline-block;min-width:26px;font-weight:700}
+.q{margin:14px 0 18px}
+.qstem{margin-bottom:6px}
+.opts{display:flex;flex-direction:column;gap:4px;padding-left:26px}
+.opt{display:flex;gap:8px;align-items:flex-start;padding:4px 8px;border-radius:4px;cursor:pointer}
+.opt:hover{background:var(--accent-soft)}
+.opt input{margin-top:4px;accent-color:var(--accent)}
+.opt .ol{font-weight:700;min-width:16px}
+.gap{display:inline-block}
+.gap-in{border:1px solid #8c97a5;border-radius:3px;padding:2px 6px;font-family:inherit;font-size:.95em;width:150px;max-width:100%;text-align:center;background:#fff;color:var(--ink)}
+.gap-in::placeholder{color:#6d7886;font-weight:700}
+.gap-in.wide{width:180px}
+select.pick{border:1px solid #8c97a5;border-radius:3px;padding:3px 6px;font-family:inherit;font-size:.95em;background:#fff;color:var(--ink);min-width:72px;max-width:100%}
+.match{display:grid;grid-template-columns:auto 1fr auto;gap:8px 12px;align-items:center;margin:10px 0}
+.match .mt{min-width:0}
+.boxlist{border:1px solid var(--ink);padding:12px 16px;margin:12px 0;max-width:560px;background:#fff}
+.boxlist h4{margin:0 0 6px;text-align:center}
+.boxlist div{display:grid;grid-template-columns:34px 1fr;gap:6px;margin:3px 0}
+.tablewrap{overflow-x:auto;margin:10px 0}
+table.ex{border-collapse:collapse;width:100%;min-width:520px;background:#fff}
+table.ex th,table.ex td{border:1px solid var(--ink);padding:7px 10px;vertical-align:top;text-align:left}
+table.ex caption{font-weight:700;border:1px solid var(--ink);border-bottom:0;padding:8px;background:#fff}
+table.ex th{background:var(--panel)}
+.notes{border:1px solid var(--ink);padding:14px 18px;background:#fff}
+.notes h4{text-align:center;margin:0 0 8px;font-size:1.1em}
+.notes h5{margin:12px 0 4px;font-size:1em}
+.notes ul{margin:0;padding-left:22px}
+.notes li{margin:5px 0}
+.summary{border:1px solid var(--ink);padding:14px 18px;background:#fff;line-height:2}
+.summary h4{text-align:center;margin:0;line-height:1.5}
+.ynng{font-size:.95em;display:grid;grid-template-columns:auto 1fr;gap:2px 14px;margin:6px 0 10px}
+.ynng b{font-style:italic}
+
+/* highlights */
+mark.hl{background:var(--hl);color:inherit;padding:0}
+#hlmenu{position:fixed;z-index:50;background:var(--head);border-radius:4px;box-shadow:0 4px 14px rgba(0,0,0,.25);display:flex;overflow:hidden}
+#hlmenu button{background:transparent;color:var(--head-ink);border:0;padding:7px 12px;font-size:14px}
+#hlmenu button:hover{background:#2c3a4c}
+
+/* Writing */
+.wprompt .box{border:1px solid var(--ink);padding:12px 16px;font-weight:700;font-style:italic;margin:10px 0;background:#fff}
+.wprompt svg{width:100%;max-width:560px;height:auto;display:block;margin:8px 0 18px}
+.wprompt .plan-t{font-weight:700;text-align:center;max-width:560px;margin:14px 0 2px}
+.editor{display:flex;flex-direction:column;height:100%;min-height:360px}
+.editor textarea{flex:1;width:100%;border:1px solid var(--line);border-radius:4px;padding:14px;font-family:var(--font);font-size:var(--fs);line-height:1.6;resize:none;background:#fff;color:var(--ink);min-height:300px}
+.wc{display:flex;justify-content:space-between;font-size:14px;color:var(--muted);margin-top:6px}
+.wc b{color:var(--ink);font-variant-numeric:tabular-nums}
+
+/* Footer nav */
+#nav{border-top:1px solid var(--line);background:var(--panel);display:flex;align-items:center;gap:10px;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-bottom:max(8px,env(safe-area-inset-bottom,0px))}
+#navParts{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;align-items:center;scrollbar-width:thin}
+.np{display:flex;align-items:center;gap:4px;padding:4px 6px;border-radius:4px;flex:0 0 auto}
+.np.cur{background:#fff;border:1px solid var(--line)}
+.np-l{background:transparent;border:0;font-weight:700;font-size:14px;padding:4px 6px;white-space:nowrap;color:var(--ink)}
+.np:not(.cur) .nums{display:none}
+.np:not(.cur) .np-l::after{content:attr(data-count);font-weight:400;color:var(--muted);margin-left:6px}
+.nums{display:flex;gap:3px}
+.nb{width:30px;height:30px;border:1px solid #9aa5b3;background:#fff;border-radius:3px;font-size:13px;font-variant-numeric:tabular-nums;color:var(--ink);position:relative;padding:0}
+.nb.done{background:var(--head);color:var(--head-ink);border-color:var(--head)}
+.nb.now{outline:2px solid var(--accent);outline-offset:1px}
+.nb.flag::after{content:"";position:absolute;top:-4px;right:-4px;width:9px;height:9px;border-radius:50%;background:var(--flag);border:1px solid #fff}
+.navctl{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.navctl label{font-size:13px;display:flex;align-items:center;gap:4px;white-space:nowrap}
+.navctl label input{accent-color:var(--flag)}
+.arrow{width:36px;height:34px;border:0;border-radius:4px;background:var(--head);color:var(--head-ink);font-size:16px}
+
+/* Modal + toast */
+#modal{position:fixed;inset:0;background:rgba(15,22,32,.55);display:flex;align-items:center;justify-content:center;z-index:60;padding:16px}
+#modal .mbox{background:#fff;border-radius:6px;max-width:440px;width:100%;padding:22px}
+#modal h3{margin:0 0 8px}
+#modal p{margin:0 0 18px;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--head);color:var(--head-ink);padding:10px 16px;border-radius:4px;z-index:70;font-size:14px;max-width:calc(100% - 32px)}
+
+/* Results */
+.res{max-width:900px;margin:0 auto}
+.res h1{font-size:26px;margin:0 0 4px}
+.scores{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:20px 0}
+.score{border:1px solid var(--line);border-radius:6px;padding:16px}
+.score .lab{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.score .big{font-size:34px;font-weight:700;font-variant-numeric:tabular-nums}
+.score .band{font-size:15px}
+.res h2{font-size:20px;margin:28px 0 8px}
+table.ak{border-collapse:collapse;width:100%;min-width:460px;font-size:14px}
+table.ak th,table.ak td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+table.ak th{background:var(--panel)}
+table.ak td.n{font-weight:700;font-variant-numeric:tabular-nums;width:44px}
+.ok{color:var(--ok);font-weight:700}
+.bad{color:var(--warn);font-weight:700}
+tr.wrong td{background:var(--warn-soft)}
+.essay{border:1px solid var(--line);border-radius:6px;padding:14px;white-space:pre-wrap;background:var(--panel);font-size:15px;margin:6px 0 4px;max-height:420px;overflow:auto}
+
+@media (max-width:760px){
+  .split{flex-direction:column;overflow:auto}
+  .split .pane{overflow:visible;flex:0 0 auto}
+  .split .left{padding:16px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px))}
+  .split .right{padding:16px max(16px,env(safe-area-inset-right,0px)) 30px max(16px,env(safe-area-inset-left,0px))}
+  .divider{display:none}
+  .editor{height:auto}
+  #timer{font-size:16px}
+  .brand .who{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div id="ytHolder" aria-hidden="true"><div id="ytPlayer"></div></div>
+<div id="app">
+  <header id="top">
+    <div class="brand"><span class="tag">IELTS</span><span class="who" id="who">Academic · Test 3</span></div>
+    <div id="timer" hidden></div>
+    <div class="hctl">
+      <span id="audioStatus" hidden></span>
+      <span id="volWrap" hidden><label for="vol">Âm lượng</label><input type="range" id="vol" min="0" max="1" step="0.05" value="0.9"></span>
+      <button class="hbtn" id="fsBtn" title="Cỡ chữ">A<span style="font-size:.8em">A</span></button>
+      <button class="hbtn primary" id="submitBtn" hidden>Nộp phần này</button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="screen" id="scr-start">
+      <div class="center"><div class="card">
+        <h1>IELTS Academic · Test 3</h1>
+        <p class="sub">Bài thi mô phỏng giao diện thi trên máy tính.</p>
+        <div class="field"><label for="candName">Tên thí sinh</label><input type="text" id="candName" placeholder="VD: Nguyen Van A" autocomplete="off"></div>
+        <ul class="secs">
+          <li><span>Listening · 40 câu · audio phát 1 lần</span><span>~30 phút + 2 phút</span></li>
+          <li><span>Reading · 3 passages · 40 câu</span><span>60 phút</span></li>
+          <li><span>Writing · Task 1 + Task 2</span><span>60 phút</span></li>
+        </ul>
+        <div class="note">Bôi đen chữ trong bài đọc hoặc câu hỏi để <b>highlight</b>. Bấm vào chỗ đã highlight để xóa. Mỗi phần đã nộp thì không quay lại được.</div>
+        <div class="row" style="margin-top:18px"><button class="btn" id="startBtn">Bắt đầu</button></div>
+      </div></div>
+    </section>
+
+    <section class="screen" id="scr-intro" hidden><div class="center"><div class="card" id="introCard"></div></div></section>
+    <section class="screen" id="scr-test" hidden></section>
+    <section class="screen" id="scr-results" hidden><div class="center"><div class="res" id="resBox"></div></div></section>
+  </main>
+
+  <footer id="nav" hidden>
+    <div id="navParts"></div>
+    <div class="navctl">
+      <label for="flagChk"><input type="checkbox" id="flagChk">Xem lại</label>
+      <button class="arrow" id="prevBtn" aria-label="Câu trước">&#8592;</button>
+      <button class="arrow" id="nextBtn" aria-label="Câu sau">&#8594;</button>
+    </div>
+  </footer>
+</div>
+
+<div id="hlmenu" hidden><button id="hlAdd">Highlight</button><button id="hlDel">Xóa highlight</button></div>
+<div id="modal" hidden><div class="mbox"><h3 id="mTitle"></h3><p id="mText"></p><div class="row" style="justify-content:flex-end"><button class="btn ghost" id="mCancel">Hủy</button><button class="btn" id="mOk">Đồng ý</button></div></div></div>
+<div id="toast" hidden></div>
+
+<script>
+(function(){
+"use strict";
+const LS='ielts-test3-mai-v1';
+const $=s=>document.querySelector(s);
+const range=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+const LET='ABCDEFGHI'.split('');
+const ROM=['i','ii','iii','iv','v','vi','vii','viii'];
+
+/* ---------- builders ---------- */
+function gap(sec,n,cls){return `<span class="gap" id="a-${sec}-${n}"><input type="text" class="gap-in ${cls||''}" data-q="${n}" placeholder="${n}" aria-label="Question ${n}" autocomplete="off" autocapitalize="off" spellcheck="false"></span>`;}
+function mcq(sec,n,stem,opts){return `<div class="q" id="a-${sec}-${n}"><div class="qstem"><span class="qnum">${n}</span>${stem}</div><div class="opts">${opts.map((o,i)=>`<label class="opt"><input type="radio" name="${sec}-${n}" data-q="${n}" value="${LET[i]}"><span class="ol">${LET[i]}</span><span>${o}</span></label>`).join('')}</div></div>`;}
+function multi(sec,a,b,stem,opts){return `<div class="q" id="a-${sec}-${a}"><span id="a-${sec}-${b}"></span><div class="qstem"><span class="qnum">${a}–${b}</span>${stem}</div><div class="opts">${opts.map((o,i)=>`<label class="opt"><input type="checkbox" data-g="${a}-${b}" value="${LET[i]}"><span class="ol">${LET[i]}</span><span>${o}</span></label>`).join('')}</div></div>`;}
+function sel(sec,n,choices){return `<select class="pick" id="a-${sec}-${n}" data-q="${n}" aria-label="Question ${n}"><option value="">${n}</option>${choices.map(c=>`<option value="${c}">${c}</option>`).join('')}</select>`;}
+function matchRow(sec,n,text,choices){return `<span class="qnum">${n}</span><span class="mt">${text}</span>${sel(sec,n,choices)}`;}
+
+/* ---------- LISTENING ---------- */
+const L=(n,c)=>gap('L',n,c);
+const LISTEN=[
+{label:'Part 1',qs:range(1,10),html:`
+<div class="partbar"><b>Part 1</b><span>Listen and answer questions 1–10.</span></div>
+<div class="inst"><h3>Questions 1–4</h3><p>Complete the form below.</p><p>Write <b>ONE WORD AND/OR A NUMBER</b> for each answer.</p></div>
+<div class="tablewrap"><table class="ex"><caption>Wayside Camera Club<br>membership form</caption>
+<tr><td>Name:</td><td>Dan Green</td></tr>
+<tr><td>Email address:</td><td>dan1068@market.com</td></tr>
+<tr><td>Home address:</td><td>52 ${L(1)} Street, Peacetown</td></tr>
+<tr><td>Heard about us:</td><td>from a ${L(2)}</td></tr>
+<tr><td>Reasons for joining:</td><td>to enter competitions<br>to ${L(3)}</td></tr>
+<tr><td>Type of membership:</td><td>${L(4)} membership (£30)</td></tr>
+</table></div>
+<div class="inst"><h3>Questions 5–10</h3><p>Complete the table below.</p><p>Write <b>NO MORE THAN TWO WORDS</b> for each answer.</p></div>
+<div class="tablewrap"><table class="ex"><caption>Photography competitions</caption>
+<tr><th>Title of competition</th><th>Instructions</th><th>Feedback to Dan</th></tr>
+<tr><td>‘${L(5,'wide')}’</td><td>A scene in the home</td><td>The picture’s composition was not good.</td></tr>
+<tr><td>‘Beautiful Sunsets’</td><td>Scene must show some ${L(6)}</td><td>The ${L(7)} was wrong.</td></tr>
+<tr><td>‘${L(8,'wide')}’</td><td>Scene must show ${L(9)}</td><td>The photograph was too ${L(10)} .</td></tr>
+</table></div>`},
+{label:'Part 2',qs:range(11,20),html:`
+<div class="partbar"><b>Part 2</b><span>Listen and answer questions 11–20.</span></div>
+<div class="inst"><h3>Questions 11 and 12</h3><p>Choose <b>TWO</b> letters, <b>A–E</b>.</p></div>
+${multi('L',11,12,'Which <b>TWO</b> warnings does Dan give about picking mushrooms?',['Don’t pick more than one variety of mushroom at a time.','Don’t pick mushrooms near busy roads.','Don’t eat mushrooms given to you.','Don’t eat mushrooms while picking them.','Don’t pick old mushrooms.'])}
+<div class="inst"><h3>Questions 13 and 14</h3><p>Choose <b>TWO</b> letters, <b>A–E</b>.</p></div>
+${multi('L',13,14,'Which <b>TWO</b> ideas about wild mushrooms does Dan say are correct?',['Mushrooms should always be peeled before eating.','Mushrooms eaten by animals may be unsafe.','Cooking destroys toxins in mushrooms.','Brightly coloured mushrooms can be edible.','All poisonous mushrooms have a bad smell.'])}
+<div class="inst"><h3>Questions 15–20</h3><p>Choose the correct letter, <b>A</b>, <b>B</b> or <b>C</b>.</p></div>
+${mcq('L',15,'What advice does Dan give about picking mushrooms in parks?',['Choose wooded areas.','Don’t disturb wildlife.','Get there early.'])}
+${mcq('L',16,'Dan says it is a good idea for beginners to',['use a mushroom app.','join a group.','take a reference book.'])}
+${mcq('L',17,'What does Dan say is important for conservation?',['selecting only fully grown mushrooms','picking a limited amount of mushrooms','avoiding areas where rare mushroom species grow'])}
+${mcq('L',18,'According to Dan, some varieties of wild mushrooms are in decline because there is',['a huge demand for them from restaurants.','a lack of rain in this part of the country.','a rise in building developments locally.'])}
+${mcq('L',19,'Dan says that when storing mushrooms, people should',['keep them in the fridge for no more than two days.','keep them in a brown bag in a dark room.','leave them for a period after washing them.'])}
+${mcq('L',20,'What does Dan say about trying new varieties of mushrooms?',['Experiment with different recipes.','Expect some to have a strong taste.','Cook them for a long time.'])}`},
+{label:'Part 3',qs:range(21,30),html:`
+<div class="partbar"><b>Part 3</b><span>Listen and answer questions 21–30.</span></div>
+<div class="inst"><h3>Questions 21 and 22</h3><p>Choose <b>TWO</b> letters, <b>A–E</b>.</p></div>
+${multi('L',21,22,'Which <b>TWO</b> opinions about the Luddites do the students express?',['Their actions were ineffective.','They are still influential today.','They have received unfair criticism.','They were proved right.','Their attitude is understandable.'])}
+<div class="inst"><h3>Questions 23 and 24</h3><p>Choose <b>TWO</b> letters, <b>A–E</b>.</p></div>
+${multi('L',23,24,'Which <b>TWO</b> predictions about the future of work are the students doubtful about?',['Work will be more rewarding.','Unemployment will fall.','People will want to delay retiring.','Working hours will be shorter.','People will change jobs more frequently.'])}
+<div class="inst"><h3>Questions 25–30</h3><p>What comment do the students make about each of the following jobs?</p><p>Choose <b>SIX</b> answers from the box and write the correct letter, <b>A–G</b>, next to Questions 25–30.</p></div>
+<div class="boxlist"><h4>Comments</h4>
+<div><b>A</b><span>These jobs are likely to be at risk.</span></div>
+<div><b>B</b><span>Their role has become more interesting in recent years.</span></div>
+<div><b>C</b><span>The number of people working in this sector has fallen dramatically.</span></div>
+<div><b>D</b><span>This job will require more qualifications.</span></div>
+<div><b>E</b><span>Higher disposable income has led to a huge increase in jobs.</span></div>
+<div><b>F</b><span>There is likely to be a significant rise in demand for this service.</span></div>
+<div><b>G</b><span>Both employment and productivity have risen.</span></div></div>
+<p><b>Jobs</b></p>
+<div class="match">
+${matchRow('L',25,'Accountants',LET.slice(0,7))}
+${matchRow('L',26,'Hairdressers',LET.slice(0,7))}
+${matchRow('L',27,'Administrative staff',LET.slice(0,7))}
+${matchRow('L',28,'Agricultural workers',LET.slice(0,7))}
+${matchRow('L',29,'Care workers',LET.slice(0,7))}
+${matchRow('L',30,'Bank clerks',LET.slice(0,7))}
+</div>`},
+{label:'Part 4',qs:range(31,40),html:`
+<div class="partbar"><b>Part 4</b><span>Listen and answer questions 31–40.</span></div>
+<div class="inst"><h3>Questions 31–40</h3><p>Complete the notes below.</p><p>Write <b>ONE WORD ONLY</b> for each answer.</p></div>
+<div class="notes"><h4>Space Traffic Management</h4>
+<h5>A Space Traffic Management system</h5><ul>
+<li>is a concept similar to Air Traffic Control, but for satellites rather than planes.</li>
+<li>would aim to set up legal and ${L(31)} ways of improving safety.</li>
+<li>does not actually exist at present.</li></ul>
+<h5>Problems in developing effective Space Traffic Management</h5><ul>
+<li>Satellites are now quite ${L(32)} and therefore more widespread (e.g. there are constellations made up of ${L(33)} of satellites).</li>
+<li>At present, satellites are not required to transmit information to help with their ${L(34)} .</li>
+<li>There are few systems for ${L(35)} satellites.</li>
+<li>Small pieces of debris may be difficult to identify.</li>
+<li>Operators may be unwilling to share details of satellites used for ${L(36)} or commercial reasons.</li>
+<li>It may be hard to collect details of the object’s ${L(37)} at a given time.</li>
+<li>Scientists can only make a ${L(38)} about where the satellite will go.</li></ul>
+<h5>Solutions</h5><ul>
+<li>Common standards should be agreed on for the presentation of information.</li>
+<li>The information should be combined in one ${L(39)} .</li>
+<li>A coordinated system must be designed to create ${L(40)} in its users.</li></ul></div>`}
+];
+
+/* ---------- READING ---------- */
+const R=(n,c)=>gap('R',n,c);
+const para=(l,t)=>`<div class="para"><b>${l}</b><p>${t}</p></div>`;
+const READ=[
+{label:'Passage 1',qs:range(1,13),passage:`
+<div class="partbar"><b>Reading Passage 1</b><span>You should spend about 20 minutes on Questions 1–13.</span></div>
+<h2>Materials to take us beyond concrete</h2>
+<p class="standfirst">Concrete is everywhere, but it’s bad for the planet, generating large amounts of carbon dioxide – alternatives are being developed</p>
+${para('A','Concrete is the second most used substance in the global economy, after water – and one of the world’s biggest single sources of greenhouse gas emissions. The chemical process by which cement, the key ingredient of concrete, is created results in large quantities of carbon dioxide. The UN estimates that there will be 9.8 billion people living on the planet by mid-century. They will need somewhere to live. If concrete is the only answer to the construction of new cities, then carbon emissions will soar, aggravating global warming. And so scientists have started innovating with other materials, in a scramble for alternatives to a universal commodity that has underpinned our modern life for many years.')}
+${para('B','The problem with replacing concrete is that it is so very good at what it does. Chris Cheeseman, an engineering professor at Imperial College London, says the key thing to consider is the extent to which concrete is used around the world, and is likely to continue to be used. ‘Concrete is not a high-carbon product. Cement is high carbon, but concrete is not. But it is the scale on which it is used that makes it high carbon. The sheer scale of manufacture is so huge, that is the issue.’')}
+${para('C','Not only are the ingredients of concrete relatively cheap and found in abundance in most places around the globe, the stuff itself has marvellous properties: Portland cement, the vital component of concrete, is mouldable and pourable, but quickly sets hard. Cheeseman also notes another advantage: concrete and steel have similar thermal expansion properties, so steel can be used to reinforce concrete, making it far stronger and more flexible as a building material than it could be on its own. According to Cheeseman, all these factors together make concrete hard to beat. ‘Concrete is amazing stuff. Making anything with similar properties is going to be very difficult.’')}
+${para('D','A possible alternative to concrete is wood. Making buildings from wood may seem like a rather medieval idea, but climate change is driving architects to turn to treated timber as a possible resource. Recent years have seen the emergence of tall buildings constructed almost entirely from timber. Vancouver, Vienna and Brumunddal in Norway are all home to constructed tall, wooden buildings.')}
+${para('E','Using wood to construct buildings, however, is not straightforward. Wood expands as it absorbs moisture from the air and is susceptible to pests, not to mention fire. But treating wood and combining it with other materials can improve its properties. Cross-laminated timber is engineered wood. An adhesive is used to stick layers of solid-sawn timber together, crosswise, to form building blocks. This material is light but has the strength of concrete and steel. Construction experts say that wooden buildings can be constructed at a greater speed than ones of concrete and steel and the process, it seems, is quieter.')}
+${para('F','Stora Enso is Europe’s biggest supplier of cross-laminated timber, and its vice-president Markus Mannström reports that the company is seeing increasing demand globally for building in wood, with climate change concerns the key driver. Finland, with its large forests, where Stora Enso is based, has been leading the way, but the company is seeing a rise in demand for its timber products across the world, including in Asia. Of course, using timber in a building also locks away the carbon that it absorbed as it grew. But even treated wood has its limitations and only when a wider range of construction projects has been proven in practice will it be possible to see wood as a real alternative to concrete in constructing tall buildings.')}
+${para('G','Fly ash and slag from iron ore are possible alternatives to cement in a concrete mix. Fly ash, a byproduct of coal-burning power plants, can be incorporated into concrete mixes to make up as much as 15 to 30% of the cement, without harming the strength or durability of the resulting mix. Iron-ore slag, a byproduct of the iron-ore smelting process, can be used in a similar way. Their incorporation into concrete mixes has the potential to reduce greenhouse gas emissions.</p><p>But Anna Surgenor, of the UK’s Green Building Council, notes that although these waste products can save carbon in the concrete mix, their use is not always straightforward. ‘It’s possible to replace the cement content in concrete with waste products to lower the overall carbon impact. But there are several calculations that need to be considered across the entire life cycle of the building – these include factoring in where these materials are being shipped from. If they are transported over long distances, using fossil fuels, the use of alternative materials might not make sense from an overall carbon reduction perspective.’')}
+${para('H','While these technologies are all promising ideas, they are either unproven or based on materials that are not abundant. In their overview of innovation in the concrete industry, Felix Preston and Johanna Lehne of the UK’s Royal Institute of International Affairs reached the conclusion that, ‘Some novel cements have been discussed for more than a decade within the research community, without breaking through. At present, these alternatives are rarely as cost-effective as conventional cement, and they face raw-material shortages and resistance from customers.’')}`,
+html:`
+<div class="inst"><h3>Questions 1–4</h3><p>Reading Passage 1 has eight sections, <b>A–H</b>.</p><p>Which section contains the following information?</p><p>Choose the correct letter, <b>A–H</b>.</p></div>
+<div class="match">
+${matchRow('R',1,'an explanation of the industrial processes that create potential raw materials for concrete',LET.slice(0,8))}
+${matchRow('R',2,'a reference to the various locations where high-rise wooden buildings can be found',LET.slice(0,8))}
+${matchRow('R',3,'an indication of how widely available the raw materials of concrete are',LET.slice(0,8))}
+${matchRow('R',4,'the belief that more high-rise wooden buildings are needed before wood can be regarded as a viable construction material',LET.slice(0,8))}
+</div>
+<div class="inst"><h3>Questions 5–8</h3><p>Complete the summary below.</p><p>Choose <b>ONE WORD ONLY</b> from the passage for each answer.</p></div>
+<div class="summary"><h4>Making buildings with wood</h4>
+Wood is a traditional building material, but current environmental concerns are encouraging ${R(5)} to use wood in modern construction projects. Using wood, however, has its challenges. For example, as ${R(6)} in the atmosphere enters wood, it increases in size. In addition, wood is prone to pests and the risk of fire is greater. However, wood can be turned into a better construction material if it is treated and combined with other materials. In one process, ${R(7)} of solid wood are glued together to create building blocks. These blocks are lighter than concrete and steel but equal them in strength. Experts say that wooden buildings are an improvement on those made of concrete and steel in terms of the ${R(8)} with which they can be constructed and how much noise is generated by the process.</div>
+<div class="inst"><h3>Questions 9–13</h3><p>Look at the following statements (Questions 9–13) and the list of people below.</p><p>Match each statement with the correct person, <b>A, B, C</b> or <b>D</b>.</p><p><b>NB</b> You may use any letter more than once.</p></div>
+<div class="match">
+${matchRow('R',9,'The environmental advantage of cement alternatives may not be as great as initially assumed.',LET.slice(0,4))}
+${matchRow('R',10,'It would be hard to create a construction alternative to concrete that offers so many comparable benefits.',LET.slice(0,4))}
+${matchRow('R',11,'Worries about the environment have led to increased interest in wood as a construction material.',LET.slice(0,4))}
+${matchRow('R',12,'Expense has been a factor in the negative response to the development of new cements.',LET.slice(0,4))}
+${matchRow('R',13,'The environmental damage caused by concrete is due to it being produced in large quantities.',LET.slice(0,4))}
+</div>
+<div class="boxlist"><h4>List of People</h4>
+<div><b>A</b><span>Chris Cheeseman</span></div><div><b>B</b><span>Markus Mannström</span></div><div><b>C</b><span>Anna Surgenor</span></div><div><b>D</b><span>Felix Preston and Johanna Lehne</span></div></div>`},
+{label:'Passage 2',qs:range(14,26),passage:`
+<div class="partbar"><b>Reading Passage 2</b><span>You should spend about 20 minutes on Questions 14–26.</span></div>
+<h2>The steam car</h2>
+<p class="standfirst">The successes and failures of the Doble brothers and their steam cars</p>
+${para('A','When primitive automobiles first began to appear in the 1800s, their engines were based on steam power. Steam had already enjoyed a long and successful career in the railways, so it was only natural that the technology evolved into a miniaturized version which was separate from the trains. But these early cars inherited steam’s weaknesses along with its strengths. The boilers had to be lit by hand, and they required about twenty minutes to build up pressure before they could be driven. Furthermore, their water reservoirs only lasted for about thirty miles before needing replenishment. Despite such shortcomings, these newly designed self-propelled carriages offered quick transportation, and by the early 1900s it was not uncommon to see such machines shuttling wealthy citizens around town.')}
+${para('B','But the glory days of steam cars were few. A new technology called the Internal Combustion Engine soon appeared, which offered the ability to drive down the road just moments after starting up. At first, these noisy gasoline cars were unpopular because they were more complicated to operate and they had difficult hand-crank starters, which were known to break arms when the engines backfired. But in 1912 General Motors introduced the electric starter, and over the following few years steam power was gradually phased out.')}
+${para('C','Even as the market was declining, four brothers made one last effort to rekindle the technology. Between 1906 and 1909, while still attending high school, Abner Doble and his three brothers built their first steam car in their parents’ basement. It comprised parts taken from a wrecked early steam car but reconfigured to drive an engine of their own design. Though it did not run well, the Doble brothers went on to build a second and third prototype in the following years. Though the Doble boys’ third prototype, nicknamed the Model B, still lacked the convenience of an internal combustion engine, it drew the attention of automobile trade magazines due to its numerous improvements over previous steam cars. The Model B proved to be superior to gasoline automobiles in many ways. Its high-pressure steam drove the engine pistons in virtual silence, in contrast to clattering gas engines which emitted the aroma of burned hydrocarbons. Perhaps most impressively, the Model B was amazingly swift. It could accelerate from zero to sixty miles per hour in just fifteen seconds, a feat described as ‘remarkable acceleration’ by <i>Automobile</i> magazine in 1914.')}
+${para('D','The following year Abner Doble drove the Model B from Massachusetts to Detroit in order to seek investment in his automobile design, which he used to open the General Engineering Company. He and his brothers immediately began working on the Model C, which was intended to expand upon the innovations of the Model B. The brothers added features such as a key-based ignition in the cabin, eliminating the need for the operator to manually ignite the boiler. With these enhancements, the Dobles’ new car company promised a steam vehicle which would provide all of the convenience of a gasoline car, but with much greater speed, much simpler driving controls, and a virtually silent powerplant. By the following April, the General Engineering Company had received 5,390 deposits for Doble Detroits, which were scheduled for delivery in early 1918.')}
+${para('E','Later that year Abner Doble delivered unhappy news to those eagerly awaiting the delivery of their modern new cars. Those buyers who received the handful of completed cars complained that the vehicles were sluggish and erratic, sometimes going in reverse when they should go forward. The new engine design, though innovative, was still plagued with serious glitches.')}
+${para('F','The brothers made one final attempt to produce a viable steam automobile. In early 1924, the Doble brothers shipped a Model E to New York City to be road-tested by the Automobile Club of America. After sitting overnight in freezing temperatures, the car was pushed out into the road and left to sit for over an hour in the frosty morning air. At the turn of the key, the boiler lit and reached its operating pressure inside of forty seconds. As they drove the test vehicle further, they found that its evenly distributed weight lent it surprisingly good handling, even though it was so heavy. As the new Doble steamer was further developed and tested, its maximum speed was pushed to over a hundred miles per hour, and it achieved about fifteen miles per gallon of kerosene with negligible emissions.')}
+${para('G','Sadly, the Dobles’ brilliant steam car never was a financial success. Priced at around $18,000 in 1924, it was popular only among the very wealthy. Plus, it is said that no two Model Es were quite the same, because Abner Doble tinkered endlessly with the design. By the time the company folded in 1931, fewer than fifty of the amazing Model E steam cars had been produced. For his whole career, until his death in 1961, Abner Doble remained adamant that steam-powered automobiles were at least equal to gasoline cars, if not superior. Given the evidence, he may have been right. Many of the Model E Dobles which have survived are still in good working condition, some having been driven over half a million miles with only normal maintenance. Astonishingly, an unmodified Doble Model E runs clean enough to pass the emissions laws in California today, and they are pretty strict. It is true that the technology poses some difficult problems, but you cannot help but wonder how efficient a steam car might be with the benefit of modern materials and computers. Under the current pressure to improve automotive performance and reduce emissions, it is not unthinkable that the steam car may rise again.')}`,
+html:`
+<div class="inst"><h3>Questions 14–20</h3><p>Reading Passage 2 has seven paragraphs, <b>A–G</b>.</p><p>Choose the correct heading for each paragraph from the list of headings below.</p></div>
+<div class="boxlist"><h4>List of Headings</h4>
+<div><b>i</b><span>A period in cold conditions before the technology is assessed</span></div>
+<div><b>ii</b><span>Marketing issues lead to failure</span></div>
+<div><b>iii</b><span>Good and bad aspects of steam technology are passed on</span></div>
+<div><b>iv</b><span>A possible solution to the issues of today</span></div>
+<div><b>v</b><span>Further improvements lead to commercial orders</span></div>
+<div><b>vi</b><span>Positive publicity at last for this quiet, clean, fast vehicle</span></div>
+<div><b>vii</b><span>A disappointing outcome for customers</span></div>
+<div><b>viii</b><span>A better option than the steam car arises</span></div></div>
+<div class="match">
+${['A','B','C','D','E','F','G'].map((p,i)=>matchRow('R',14+i,'Paragraph '+p,ROM)).join('')}
+</div>
+<div class="inst"><h3>Questions 21–23</h3><p>Choose the correct letter, <b>A, B, C</b> or <b>D</b>.</p></div>
+${mcq('R',21,'What point does the writer make about the steam car in Paragraph B?',['Its success was short-lived.','Not enough cars were made.','Car companies found them hard to sell.','People found them hard to drive.'])}
+${mcq('R',22,'When building their first steam car, the Doble brothers',['constructed all the parts themselves.','made written notes at each stage of the construction.','needed several attempts to achieve a competitive model.','sought the advice of experienced people in the car industry.'])}
+${mcq('R',23,'In order to produce the Model C, the Doble brothers',['moved production to a different city.','raised financial capital.','employed an additional worker.','abandoned their earlier designs.'])}
+<div class="inst"><h3>Questions 24–26</h3><p>Complete the summary below.</p><p>Choose <b>ONE WORD AND/OR A NUMBER</b> from the passage for each answer.</p></div>
+<div class="summary"><h4>The Model E</h4>
+The Model E was road-tested in 1924 by the Automobile Club of America. They found it easy to drive, despite its weight, and it impressed the spectators. A later version of the Model E raised its ${R(24)} , while keeping its emissions extremely low.<br><br>
+The steam car was too expensive for many people and its design was constantly being altered. Under ${R(25)} cars were produced before the company went out of business. However, even today, there are Model Es on the road in the US. They are straightforward to maintain, and they satisfy California’s ${R(26)} emissions laws. Perhaps today’s technology and materials would help us revive the steam car.</div>`},
+{label:'Passage 3',qs:range(27,40),passage:`
+<div class="partbar"><b>Reading Passage 3</b><span>You should spend about 20 minutes on Questions 27–40.</span></div>
+<h2>The case for mixed-ability classes</h2>
+<p>Picture this scene. It’s an English literature lesson in a UK school, and the teacher has just read an extract from Shakespeare’s <i>Romeo and Juliet</i> with a class of 15-year-olds. He’s given some of the students copies of <i>No Fear Shakespeare</i>, a kid-friendly translation of the original. For three students, even these literacy demands are beyond them. Another girl simply can’t focus and he gives her pens and paper to draw with. The teacher can ask the <i>No Fear</i> group to identify the key characters and maybe provide a tentative plot summary. He can ask most of the class about character development, and five of them might be able to support their statements with textual evidence. Now two curious students are wondering whether Shakespeare advocates living a life of moderation or one of passionate engagement.</p>
+<p>As a teacher myself, I’d think my lesson would be going rather well if the discussion went as described above. But wouldn’t this kind of class work better if there weren’t such a huge gap between the top and the bottom? If we put all the kids who needed literacy support into one class, and all the students who want to discuss the virtue of moderation into another?</p>
+<p>The practice of ‘streaming’, or ‘tracking’, involves separating students into classes depending on their diagnosed levels of attainment. At a macro level, it requires the establishment of academically selective schools for the brightest students, and comprehensive schools for the rest. Within schools, it means selecting students into a ‘stream’ of general ability, or ‘sets’ of subject-specific ability. The practice is intuitively appealing to almost every stakeholder.</p>
+<p>I have heard the mixed-ability model attacked by way of analogy: a group hike. The fittest in the group take the lead and set a brisk pace, only to have to stop and wait every 20 minutes. This is frustrating, and their enthusiasm wanes. Meanwhile, the slowest ones are not only embarrassed but physically struggling to keep up. What’s worse, they never get a long enough break. They honestly just want to quit. Hiking, they feel, is not for them.</p>
+<p>Mixed-ability classes bore students, frustrate parents and burn out teachers. The brightest ones will never summit Mount Qomolangma, and the stragglers won’t enjoy the lovely stroll in the park they are perhaps more suited to. Individuals suffer at the demands of the collective, mediocrity prevails. So: is learning like hiking?</p>
+<p>The current pedagogical paradigm is arguably that of constructivism, which emerged out of the work of psychologist Lev Vygotsky. In the 1930s, Vygotsky emphasised the importance of targeting a student’s specific ‘zone of proximal development’ (ZPD). This is the gap between what they can achieve only with support – teachers, textbooks, worked examples, parents and so on – and what they can achieve independently. The purpose of teaching is to provide and then gradually remove this ‘scaffolding’ until they are autonomous. If we accept this model, it follows that streaming students with similar ZPDs would be an efficient and effective solution. And that forcing everyone on the same hike – regardless of aptitude – would be madness.</p>
+<p>Despite all this, there is limited empirical evidence to suggest that streaming results in better outcomes for students. Professor John Hattie, director of the Melbourne Education Research Institute, notes that ‘tracking has minimal effects on learning outcomes’. What is more, streaming appears to significantly – and negatively – affect those students assigned to the lowest sets. These students tend to have much higher representation of low socioeconomic class. Less significant is the small benefit for those lucky clever students in the higher sets. The overall result is that the smart stay smart and the dumb get dumber, further entrenching the social divide.</p>
+<p>In the latest update of Hattie’s influential meta-analysis of factors influencing student achievement, one of the most significant factors is the teachers’ estimate of achievement. Streaming students by diagnosed achievement automatically limits what the teacher feels the student is capable of. Meanwhile, in a mixed environment, teachers’ estimates need to be more diverse and flexible.</p>
+<p>While streaming might seem to help teachers effectively target a student’s ZPD, it can underestimate the importance of peer-to-peer learning. A crucial aspect of constructivist theory is the role of the MKO – ‘more-knowledgeable other’ – in knowledge construction. While teachers are traditionally the MKOs in classrooms, the value of knowledgeable student peers must not go unrecognised either.</p>
+<p>I find it amazing to watch students get over an idea to their peers in ways that I would never think of. They operate with different language tools and different social tools from teachers and, having just learnt it themselves, they possess similar cognitive structures to their struggling classmates. There is also something exciting about passing on skills and knowledge that you yourself have just mastered – a certain pride and zeal, a certain freshness to the interaction between ‘teacher’ and ‘learner’ that is often lost by the expert for whom the steps are obvious and the joy of discovery forgotten.</p>
+<p>Having a variety of different abilities in a collaborative learning environment provides valuable resources for helping students meet their learning needs, not to mention improving their communication and social skills. And today, more than ever, we need the many to flourish – not suffer at the expense of a few bright stars. Once a year, I go on a hike with my class, a mixed bunch of students. It <i>is</i> challenging. The fittest students realise they need to encourage the reluctant. There are lookouts who report back, and extra items to carry for others. We make it – together.</p>`,
+html:`
+<div class="inst"><h3>Questions 27–30</h3><p>Choose the correct letter, <b>A, B, C</b> or <b>D</b>.</p></div>
+${mcq('R',27,'The writer describes the <i>Romeo and Juliet</i> lesson in order to demonstrate',['how few students are interested in literature.','how a teacher handles a range of learning needs.','how unsuitable Shakespeare is for most teenagers.','how weaker students can disrupt their classmates’ learning.'])}
+${mcq('R',28,'What does the writer say about streaming in the third paragraph?',['It has a very broad appeal.','It favours cleverer students.','It is relatively simple to implement.','It works better in some schools than others.'])}
+${mcq('R',29,'What idea is suggested by the reference to Mount Qomolangma in the fifth paragraph?',['students following unsuitable paths','students attempting interesting tasks','students not achieving their full potential','students not being aware of their limitations'])}
+${mcq('R',30,'What does the word ‘scaffolding’ in the sixth paragraph refer to?',['the factors which prevent a student from learning effectively','the environment where most of a student’s learning takes place','the assistance given to a student in their initial stages of learning','the setting of appropriate learning targets for a student’s aptitude'])}
+<div class="inst"><h3>Questions 31–35</h3><p>Complete the summary using the list of phrases, <b>A–I</b>, below.</p></div>
+<div class="summary"><h4>Is streaming effective?</h4>
+According to Professor John Hattie of the Melbourne Education Research Institute, there is very little indication that streaming leads to ${sel('R',31,LET)} . He points out that, in schools which use streaming, the most significant impact is on those students placed in the ${sel('R',32,LET)} , especially where a large proportion of them have ${sel('R',33,LET)} . Meanwhile, for the ${sel('R',34,LET)} , there appears to be only minimal advantage. A further issue is that teachers tend to have ${sel('R',35,LET)} of students in streamed groups.</div>
+<div class="boxlist" style="max-width:640px">
+<div><b>A</b><span>wrong classes</span></div><div><b>B</b><span>lower expectations</span></div><div><b>C</b><span>average learners</span></div>
+<div><b>D</b><span>bottom sets</span></div><div><b>E</b><span>brightest pupils</span></div><div><b>F</b><span>disadvantaged backgrounds</span></div>
+<div><b>G</b><span>weaker students</span></div><div><b>H</b><span>higher achievements</span></div><div><b>I</b><span>positive impressions</span></div></div>
+<div class="inst"><h3>Questions 36–40</h3><p>Do the following statements agree with the views of the writer in Reading Passage 3?</p></div>
+<div class="ynng"><b>YES</b><span>if the statement agrees with the views of the writer</span><b>NO</b><span>if the statement contradicts the views of the writer</span><b>NOT GIVEN</b><span>if it is impossible to say what the writer thinks about this</span></div>
+<div class="match">
+${matchRow('R',36,'The Vygotsky model of education supports the concept of a mixed-ability class.',['YES','NO','NOT GIVEN'])}
+${matchRow('R',37,'Some teachers are uncertain about allowing students to take on MKO roles in the classroom.',['YES','NO','NOT GIVEN'])}
+${matchRow('R',38,'It can be rewarding to teach knowledge which you have only recently acquired.',['YES','NO','NOT GIVEN'])}
+${matchRow('R',39,'The priority should be to ensure that the highest-achieving students attain their goals.',['YES','NO','NOT GIVEN'])}
+${matchRow('R',40,'Taking part in collaborative outdoor activities with teachers and classmates can improve student outcomes in the classroom.',['YES','NO','NOT GIVEN'])}
+</div>`}
+];
+
+/* ---------- WRITING ---------- */
+const plan=(old)=>{
+  const st='stroke="#1b2430" stroke-width="2" fill="none"';
+  const t=(x,y,s,sz)=>`<text x="${x}" y="${y}" text-anchor="middle" font-size="${sz||13}" fill="#1b2430" font-family="Arial">${s}</text>`;
+  const chairs=(cx,cy)=>{let s=`<circle cx="${cx}" cy="${cy}" r="13" ${st}/>`;for(let i=0;i<8;i++){const a=i*Math.PI/4;s+=`<circle cx="${(cx+20*Math.cos(a)).toFixed(1)}" cy="${(cy+20*Math.sin(a)).toFixed(1)}" r="3.5" stroke="#1b2430" stroke-width="1.2" fill="#fff"/>`;}return s;};
+  let s=`<svg viewBox="0 0 600 340" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${old?'Central Library 20 years ago':'Central Library today'}"><rect x="0" y="0" width="600" height="340" fill="#ffffff"/>
+  <rect x="40" y="16" width="520" height="290" ${st}/>
+  <line x1="260" y1="16" x2="260" y2="110" ${st}/><line x1="340" y1="16" x2="340" y2="110" ${st}/>
+  <line x1="40" y1="${old?110:122}" x2="260" y2="${old?110:122}" ${st}/>
+  <line x1="40" y1="210" x2="260" y2="210" ${st}/><line x1="260" y1="210" x2="260" y2="306" ${st}/>
+  <rect x="268" y="303" width="64" height="7" fill="#fff" stroke="#1b2430" stroke-width="1.5"/>${t(300,328,'Entrance')}`;
+  if(old){
+    s+=`<line x1="340" y1="110" x2="560" y2="110" ${st}/><line x1="260" y1="16" x2="260" y2="122" stroke="#fff" stroke-width="0"/>
+    <path d="M560 210 L460 210 Q345 212 340 306" ${st}/>
+    ${t(150,58,'CDs, videos,')}${t(150,75,'computer games')}${t(450,66,"Children’s books")}
+    ${t(150,165,'Adult fiction books')}${t(450,165,'Adult non-fiction books')}
+    ${t(150,252,'Reading room')}${t(150,269,'(newspapers &amp; magazines)')}
+    ${t(465,256,'Enquiry desk')}${t(455,273,'(tickets, book returns, etc.)',12)}
+    ${chairs(300,130)}${chairs(300,182)}${t(300,240,'Tables &amp;')}${t(300,256,'chairs')}`;
+  }else{
+    s+=`<line x1="260" y1="110" x2="260" y2="122" ${st}/><line x1="340" y1="110" x2="560" y2="110" ${st}/>
+    <line x1="340" y1="210" x2="560" y2="210" ${st}/><line x1="340" y1="210" x2="340" y2="306" ${st}/>
+    <rect x="52" y="26" width="44" height="18" ${st}/>${t(74,40,'Sofa',11)}
+    <rect x="200" y="60" width="50" height="18" ${st}/>${t(225,74,'Sofa',11)}
+    ${t(160,44,'Storytelling')}${t(160,60,'events')}${t(130,108,"Children’s fiction books")}
+    ${t(150,170,'All reference books')}${t(150,262,'Computer room')}
+    ${t(450,66,'Lecture room')}${t(450,132,'Adult fiction books')}
+    <rect x="395" y="141" width="110" height="20" ${st}/>${t(450,156,'Information desk',12)}
+    ${t(450,180,'Self-service machines',12)}
+    <rect x="395" y="188" width="28" height="10" ${st}/><rect x="436" y="188" width="28" height="10" ${st}/><rect x="477" y="188" width="28" height="10" ${st}/>
+    ${t(450,262,'Café')}`;
+  }
+  return s+'</svg>';
+};
+const WRITE=[
+{label:'Task 1',prompt:`
+<div class="partbar"><b>Writing Task 1</b><span>You should spend about 20 minutes on this task.</span></div>
+<div class="box">The diagram below shows the floor plan of a public library 20 years ago and how it looks now.<br><br>Summarise the information by selecting and reporting the main features, and make comparisons where relevant.</div>
+<p>Write at least 150 words.</p>
+<p class="plan-t">Central Library 20 years ago</p>${plan(true)}
+<p class="plan-t">Central Library today</p>${plan(false)}`},
+{label:'Task 2',prompt:`
+<div class="partbar"><b>Writing Task 2</b><span>You should spend about 40 minutes on this task.</span></div>
+<p>Write about the following topic:</p>
+<div class="box">In many countries around the world, rural people are moving to cities, so the population in the countryside is decreasing.<br><br>Do you think this is a positive or a negative development?</div>
+<p>Give reasons for your answer and include any relevant examples from your own knowledge or experience.</p>
+<p>Write at least 250 words.</p>`}
+];
+
+/* ---------- ANSWER KEYS ---------- */
+const KEY={
+ L:{1:['Marrowfield'],2:['relative'],3:['socialise','socialize'],4:['full'],5:['Domestic Life'],6:['clouds'],7:['timing'],8:['Animal Magic'],9:['movement','animal movement'],10:['dark'],
+    15:['C'],16:['B'],17:['B'],18:['C'],19:['A'],20:['A'],25:['G'],26:['E'],27:['B'],28:['C'],29:['F'],30:['A'],
+    31:['technical'],32:['cheap'],33:['thousands'],34:['identification'],35:['tracking'],36:['military'],37:['location'],38:['prediction'],39:['database'],40:['trust']},
+ R:{1:['G'],2:['D'],3:['C'],4:['F'],5:['architects'],6:['moisture'],7:['layers'],8:['speed'],9:['C'],10:['A'],11:['B'],12:['D'],13:['A'],
+    14:['iii'],15:['viii'],16:['vi'],17:['v'],18:['vii'],19:['i'],20:['iv'],21:['A'],22:['C'],23:['B'],24:['speed'],25:['fifty','50'],26:['strict'],
+    27:['B'],28:['A'],29:['C'],30:['C'],31:['H'],32:['D'],33:['F'],34:['E'],35:['B'],36:['NO'],37:['NOT GIVEN'],38:['YES'],39:['NO'],40:['NOT GIVEN']}
+};
+const GROUPS={L:[[11,12,['B','C']],[13,14,['B','D']],[21,22,['A','E']],[23,24,['B','D']]],R:[]};
+const groupOf=(sec,n)=>GROUPS[sec].find(g=>g[0]===n||g[1]===n);
+const BAND_L=[[39,9],[37,8.5],[35,8],[32,7.5],[30,7],[26,6.5],[23,6],[18,5.5],[16,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[2,2],[1,1],[0,0]];
+const BAND_R=[[39,9],[37,8.5],[35,8],[33,7.5],[30,7],[27,6.5],[23,6],[19,5.5],[15,5],[13,4.5],[10,4],[8,3.5],[6,3],[4,2.5],[2,2],[1,1],[0,0]];
+const band=(t,s)=>t.find(r=>s>=r[0])[1];
+const norm=s=>(s||'').toLowerCase().replace(/[‘’“”"']/g,'').replace(/\s+/g,' ').trim().replace(/^[.,;:]+|[.,;:]+$/g,'');
+
+/* ---------- STATE ---------- */
+const fresh=()=>({name:'',sec:'start',stage:'intro',part:{L:0,R:0,W:0},ans:{L:{},R:{},W:{t1:'',t2:''}},flags:{L:{},R:{}},deadline:null,audio:'none',fs:16,cur:{L:1,R:1}});
+function load(){try{const v=JSON.parse(localStorage.getItem(LS));return v&&v.ans?v:null;}catch(e){return null;}}
+function save(){try{localStorage.setItem(LS,JSON.stringify(S));}catch(e){}}
+let S=load()||fresh();
+const PARTS={L:LISTEN,R:READ,W:WRITE};
+const SECNAME={L:'Listening',R:'Reading',W:'Writing'};
+const NEXT={L:'R',R:'W',W:'done'};
+let audio=null, audioURL=null, audioDur=0, built={};
+
+/* ---------- BUILD ---------- */
+function buildSection(sec){
+  if(built[sec]) return built[sec];
+  const wrap=document.createElement('div'); wrap.className='sec'; wrap.id='sec-'+sec; wrap.hidden=true;
+  PARTS[sec].forEach((p,i)=>{
+    const d=document.createElement('div'); d.className='part'; d.dataset.i=i; d.hidden=true;
+    if(sec==='L'){
+      d.innerHTML=`<div class="pane single hl-zone"><div class="inner">${p.html}</div></div>`;
+    }else if(sec==='R'){
+      d.classList.add('split');
+      d.innerHTML=`<div class="pane left passage hl-zone">${p.passage}</div><div class="divider" role="separator" aria-label="Kéo để đổi kích thước"></div><div class="pane right hl-zone">${p.html}</div>`;
+    }else{
+      d.classList.add('split');
+      d.innerHTML=`<div class="pane left wprompt hl-zone">${p.prompt}</div><div class="divider" role="separator" aria-label="Kéo để đổi kích thước"></div><div class="pane right"><div class="editor"><label for="w-${i}" style="font-weight:700;margin-bottom:6px">Your answer – ${p.label}</label><textarea id="w-${i}" data-w="t${i+1}" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"></textarea><div class="wc"><span>Không có kiểm tra chính tả, giống thi thật.</span><span>Words: <b id="wc-${i}">0</b></span></div></div></div>`;
+    }
+    wrap.appendChild(d);
+  });
+  $('#scr-test').appendChild(wrap);
+  restore(sec,wrap);
+  wrap.querySelectorAll('.divider').forEach(dv=>initDivider(dv));
+  built[sec]=wrap; return wrap;
+}
+function restore(sec,wrap){
+  const A=S.ans[sec];
+  if(sec==='W'){['t1','t2'].forEach((k,i)=>{const ta=wrap.querySelector(`[data-w="${k}"]`);ta.value=A[k]||'';$('#wc-'+i)||0;});setTimeout(()=>{updWC(0);updWC(1);},0);return;}
+  wrap.querySelectorAll('[data-q]').forEach(el=>{
+    const v=A[el.dataset.q]; if(v==null) return;
+    if(el.type==='radio') el.checked=(el.value===v); else el.value=v;
+  });
+  wrap.querySelectorAll('[data-g]').forEach(el=>{const v=A[el.dataset.g]; if(Array.isArray(v)) el.checked=v.includes(el.value);});
+}
+const words=t=>(t.trim().match(/\S+/g)||[]).length;
+function updWC(i){const ta=document.getElementById('w-'+i); const o=document.getElementById('wc-'+i); if(ta&&o) o.textContent=words(ta.value);}
+
+/* ---------- ANSWER EVENTS ---------- */
+function onAns(e){
+  const t=e.target; if(S.stage!=='test') return;
+  const sec=S.sec;
+  if(t.dataset.w){S.ans.W[t.dataset.w]=t.value; updWC(Number(t.dataset.w.slice(1))-1); save(); renderNav(); return;}
+  if(t.dataset.g){
+    const box=t.closest('.q'); const checked=[...box.querySelectorAll('[data-g]:checked')];
+    if(checked.length>2){t.checked=false; toast('Chỉ chọn TWO đáp án.'); return;}
+    S.ans[sec][t.dataset.g]=checked.map(c=>c.value).sort();
+    S.cur[sec]=Number(t.dataset.g.split('-')[0]);
+  }else if(t.dataset.q){
+    if(t.type==='radio'&&!t.checked) return;
+    S.ans[sec][t.dataset.q]=t.value;
+  }else return;
+  save(); renderNav();
+}
+document.addEventListener('input',onAns);
+document.addEventListener('change',onAns);
+document.addEventListener('focusin',e=>{
+  if(S.stage!=='test'||!(S.sec==='L'||S.sec==='R')) return;
+  const t=e.target; let n=null;
+  if(t.dataset&&t.dataset.q) n=Number(t.dataset.q); else if(t.dataset&&t.dataset.g) n=Number(t.dataset.g.split('-')[0]);
+  if(n){S.cur[S.sec]=n; renderNav();}
+});
+
+function answered(sec,n){
+  const g=groupOf(sec,n);
+  if(g){const v=S.ans[sec][g[0]+'-'+g[1]]||[]; return n===g[0]?v.length>=1:v.length>=2;}
+  return !!(S.ans[sec][n]&&String(S.ans[sec][n]).trim());
+}
+
+/* ---------- NAV ---------- */
+function renderNav(){
+  const nav=$('#nav');
+  if(S.stage!=='test'||S.sec==='done'||S.sec==='start'){nav.hidden=true;return;}
+  nav.hidden=false;
+  const sec=S.sec, cur=S.part[sec];
+  const box=$('#navParts');
+  if(sec==='W'){
+    box.innerHTML=WRITE.map((p,i)=>`<div class="np ${i===cur?'cur':''}"><button class="np-l" data-part="${i}" data-count="">${p.label} · ${words(S.ans.W['t'+(i+1)]||'')} words</button></div>`).join('');
+    $('.navctl label').hidden=true;
+  }else{
+    $('.navctl label').hidden=false;
+    box.innerHTML=PARTS[sec].map((p,i)=>{
+      const done=p.qs.filter(n=>answered(sec,n)).length;
+      return `<div class="np ${i===cur?'cur':''}"><button class="np-l" data-part="${i}" data-count="${done} of ${p.qs.length}">${p.label}</button><span class="nums">${p.qs.map(n=>`<button class="nb ${answered(sec,n)?'done':''} ${S.flags[sec][n]?'flag':''} ${n===S.cur[sec]?'now':''}" data-goto="${n}" aria-label="Question ${n}">${n}</button>`).join('')}</span></div>`;
+    }).join('');
+    $('#flagChk').checked=!!S.flags[sec][S.cur[sec]];
+  }
+}
+$('#navParts').addEventListener('click',e=>{
+  const g=e.target.closest('[data-goto]'); if(g){goQ(Number(g.dataset.goto));return;}
+  const p=e.target.closest('[data-part]'); if(p){setPart(Number(p.dataset.part));}
+});
+function setPart(i){
+  const sec=S.sec; S.part[sec]=i; save();
+  built[sec].querySelectorAll('.part').forEach(d=>d.hidden=Number(d.dataset.i)!==i);
+  hideMenu(); renderNav();
+}
+function goQ(n){
+  const sec=S.sec; const pi=PARTS[sec].findIndex(p=>p.qs.includes(n));
+  if(pi<0) return;
+  if(pi!==S.part[sec]) setPart(pi);
+  S.cur[sec]=n; save(); renderNav();
+  const el=document.getElementById(`a-${sec}-${n}`); if(!el) return;
+  el.scrollIntoView({block:'center',behavior:'smooth'});
+  const f=el.matches('input,select')?el:(el.closest('.q')||el).querySelector('input,select');
+  if(f) setTimeout(()=>f.focus({preventScroll:true}),250);
+}
+$('#flagChk').addEventListener('change',e=>{const sec=S.sec;const n=S.cur[sec];if(e.target.checked) S.flags[sec][n]=true; else delete S.flags[sec][n]; save(); renderNav();});
+function step(d){
+  const sec=S.sec;
+  if(sec==='W'){setPart(Math.max(0,Math.min(1,S.part.W+d)));return;}
+  const n=Math.max(1,Math.min(40,S.cur[sec]+d)); goQ(n);
+}
+$('#prevBtn').addEventListener('click',()=>step(-1));
+$('#nextBtn').addEventListener('click',()=>step(1));
+
+/* ---------- DIVIDER ---------- */
+function initDivider(dv){
+  dv.addEventListener('pointerdown',e=>{
+    const part=dv.parentElement, left=part.querySelector('.left');
+    dv.setPointerCapture(e.pointerId);
+    const move=ev=>{const r=part.getBoundingClientRect(); let p=(ev.clientX-r.left)/r.width*100; p=Math.max(25,Math.min(75,p)); left.style.flexBasis=p+'%';};
+    const up=()=>{dv.removeEventListener('pointermove',move);dv.removeEventListener('pointerup',up);};
+    dv.addEventListener('pointermove',move); dv.addEventListener('pointerup',up);
+  });
+}
+
+/* ---------- HIGHLIGHT ---------- */
+const menu=$('#hlmenu'); let pendingRange=null, pendingMark=null;
+function hideMenu(){menu.hidden=true;pendingRange=null;pendingMark=null;}
+function zoneOf(node){const el=node.nodeType===1?node:node.parentElement;return el?el.closest('.hl-zone'):null;}
+function placeMenu(rect){
+  menu.hidden=false;
+  const mw=menu.offsetWidth, mh=menu.offsetHeight;
+  let x=rect.left+rect.width/2-mw/2, y=rect.top-mh-8;
+  if(y<8) y=rect.bottom+8;
+  x=Math.max(8,Math.min(window.innerWidth-mw-8,x));
+  menu.style.left=x+'px'; menu.style.top=y+'px';
+}
+function checkSelection(){
+  const s=getSelection();
+  if(!s.rangeCount||s.isCollapsed){ if(!pendingMark) hideMenu(); return; }
+  const r=s.getRangeAt(0);
+  if(!zoneOf(r.commonAncestorContainer)||!r.toString().trim()){hideMenu();return;}
+  pendingRange=r.cloneRange(); pendingMark=null;
+  $('#hlAdd').hidden=false; $('#hlDel').hidden=true;
+  placeMenu(r.getBoundingClientRect());
+}
+document.addEventListener('mouseup',e=>{if(menu.contains(e.target))return; setTimeout(checkSelection,10);});
+document.addEventListener('touchend',e=>{if(menu.contains(e.target))return; setTimeout(checkSelection,350);});
+document.addEventListener('keyup',e=>{if(e.shiftKey) checkSelection();});
+document.addEventListener('click',e=>{
+  if(menu.contains(e.target)) return;
+  const m=e.target.closest('mark.hl');
+  if(m&&getSelection().isCollapsed){pendingMark=m;pendingRange=null;$('#hlAdd').hidden=true;$('#hlDel').hidden=false;placeMenu(m.getBoundingClientRect());}
+});
+document.querySelector('#main').addEventListener('scroll',hideMenu,true);
+function applyHL(range){
+  let root=range.commonAncestorContainer; if(root.nodeType===3) root=root.parentNode;
+  const nodes=[];
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{
+    if(!range.intersectsNode(n)||!n.nodeValue.length) return NodeFilter.FILTER_REJECT;
+    const p=n.parentElement; if(!p||p.closest('input,select,textarea,button,option,mark.hl')||!p.closest('.hl-zone')) return NodeFilter.FILTER_REJECT;
+    return NodeFilter.FILTER_ACCEPT;}});
+  while(w.nextNode()) nodes.push(w.currentNode);
+  const jobs=nodes.map(n=>({n,s:n===range.startContainer?range.startOffset:0,e:n===range.endContainer?range.endOffset:n.nodeValue.length}));
+  jobs.forEach(({n,s,e})=>{
+    if(s>=e) return;
+    let t=n; if(s>0) t=t.splitText(s); if(e-s<t.nodeValue.length) t.splitText(e-s);
+    if(!t.nodeValue.trim()&&t.nodeValue.length<2) return;
+    const m=document.createElement('mark'); m.className='hl'; t.parentNode.insertBefore(m,t); m.appendChild(t);
+  });
+}
+$('#hlAdd').addEventListener('click',()=>{if(pendingRange){applyHL(pendingRange);getSelection().removeAllRanges();}hideMenu();});
+$('#hlDel').addEventListener('click',()=>{const m=pendingMark;if(m&&m.parentNode){const p=m.parentNode;while(m.firstChild)p.insertBefore(m.firstChild,m);p.removeChild(m);p.normalize();}hideMenu();});
+
+/* ---------- MODAL / TOAST ---------- */
+let mCb=null;
+function confirmBox(title,text,okLabel,cb){$('#mTitle').textContent=title;$('#mText').textContent=text;$('#mOk').textContent=okLabel||'Đồng ý';mCb=cb;$('#modal').hidden=false;$('#mOk').focus();}
+$('#mCancel').addEventListener('click',()=>{$('#modal').hidden=true;mCb=null;});
+$('#mOk').addEventListener('click',()=>{$('#modal').hidden=true;const c=mCb;mCb=null;if(c)c();});
+let tT=null;
+function toast(msg,ms){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(tT);tT=setTimeout(()=>t.hidden=true,ms||2600);}
+
+/* ---------- TIMER ---------- */
+function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));const m=Math.floor(s/60),r=s%60;return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0');}
+function tick(){
+  const el=$('#timer');
+  if(S.stage!=='test'||!S.deadline||S.sec==='done'||S.sec==='start'){el.hidden=true;return;}
+  const rem=S.deadline-Date.now();
+  el.hidden=false; el.innerHTML=`${fmt(rem)} <small>còn lại</small>`;
+  el.classList.toggle('low',rem<5*60*1000);
+  if(rem<=0){ toast('Hết giờ – phần '+SECNAME[S.sec]+' đã được nộp tự động.',4000); finishSection(); }
+}
+setInterval(tick,1000);
+
+/* ---------- AUDIO ---------- */
+if('mediaSession' in navigator){['pause','seekbackward','seekforward','seekto','previoustrack','nexttrack','stop'].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,()=>{});}catch(e){}});}
+function setAudioStatus(){
+  const st=$('#audioStatus'), vw=$('#volWrap');
+  const show=S.sec==='L'&&S.stage==='test';
+  st.hidden=!show; vw.hidden=!(show&&S.audio==='playing'&&audio);
+  if(!show) return;
+  st.textContent={playing:'▶ Đang phát audio',played:'Audio đã kết thúc',manual:'Audio do giáo viên phát',interrupted:'Audio bị gián đoạn'}[S.audio]||'';
+}
+$('#vol').addEventListener('input',e=>{if(ytp&&ytReady){try{ytp.setVolume(Math.round(Number(e.target.value)*100));}catch(_){}}});
+
+/* ---------- YOUTUBE AUDIO ---------- */
+const YT_ID='_JcNXmSPB08';
+let ytp=null, ytReady=false, ytLoading=false;
+function ytInfo(t){const el=document.getElementById('audioInfo'); if(el) el.textContent=t;}
+function initYT(){
+  if(ytReady){ytInfo('Audio đã sẵn sàng · '+(audioDur?fmt(audioDur*1000):'')); $('#startL').disabled=false; return;}
+  if(ytLoading) return; ytLoading=true;
+  window.onYouTubeIframeAPIReady=()=>{
+    ytp=new YT.Player('ytPlayer',{width:200,height:200,videoId:YT_ID,
+      playerVars:{controls:0,disablekb:1,fs:0,rel:0,iv_load_policy:3,playsinline:1,modestbranding:1,cc_load_policy:0},
+      events:{
+        onReady:()=>{ytReady=true; audioDur=ytp.getDuration()||0; ytInfo('Audio đã sẵn sàng'+(audioDur?' · dài '+fmt(audioDur*1000):'')); const b=document.getElementById('startL'); if(b) b.disabled=false;},
+        onStateChange:e=>{
+          if(e.data===YT.PlayerState.ENDED&&S.audio==='playing'){S.audio='played'; S.deadline=Math.min(S.deadline,Date.now()+120000); save(); setAudioStatus(); toast('Audio đã kết thúc. Bạn còn 2 phút để kiểm tra đáp án.',5000);}
+          else if(e.data===YT.PlayerState.PAUSED&&S.audio==='playing'){ytp.playVideo();}
+          else if(e.data===YT.PlayerState.PLAYING&&S.audio==='playing'){const d=ytp.getDuration(); if(d&&!audioDur){audioDur=d;}}
+        },
+        onError:e=>{const m={2:'link video không hợp lệ',5:'trình duyệt không phát được video này',100:'video không còn tồn tại hoặc ở chế độ riêng tư',101:'chủ video không cho phép nhúng',150:'chủ video không cho phép nhúng',153:'YouTube từ chối phát khi mở file trực tiếp trên máy (hãy đưa file lên một trang web)'}; ytInfo('Lỗi '+e.data+': '+(m[e.data]||'không phát được audio')+'. Hãy dùng chế độ giáo viên tự phát audio.');}
+      }});
+  };
+  const sc=document.createElement('script'); sc.src='https://www.youtube.com/iframe_api';
+  sc.onerror=()=>ytInfo('Không tải được YouTube. Kiểm tra kết nối mạng, rồi tải lại trang.');
+  document.head.appendChild(sc);
+}
+
+/* ---------- SCREENS ---------- */
+function show(id){['#scr-start','#scr-intro','#scr-test','#scr-results'].forEach(s=>$(s).hidden=(s!==id));}
+function render(){
+  document.documentElement.style.setProperty('--fs',S.fs+'px');
+  $('#who').textContent=(S.name?S.name+' · ':'')+'Academic · Test 3';
+  $('#submitBtn').hidden=!(S.stage==='test'&&['L','R','W'].includes(S.sec));
+  if(S.sec==='start'){show('#scr-start');$('#candName').value=S.name||'';}
+  else if(S.sec==='done'){show('#scr-results');renderResults();}
+  else if(S.stage==='intro'){show('#scr-intro');renderIntro();}
+  else{
+    show('#scr-test');
+    Object.keys(built).forEach(k=>built[k].hidden=true);
+    const w=buildSection(S.sec); w.hidden=false; setPart(S.part[S.sec]||0);
+  }
+  setAudioStatus(); renderNav(); tick();
+}
+
+function renderIntro(){
+  const c=$('#introCard'), sec=S.sec;
+  if(sec==='L'){
+    c.innerHTML=`<h2>Listening</h2>
+      <p>4 parts, 40 câu hỏi. Audio <b>chỉ phát một lần</b>, không tạm dừng, không tua lại. Sau khi audio kết thúc, bạn có <b>2 phút</b> để kiểm tra đáp án.</p>
+      <div class="filebox"><b>Audio Listening</b><div id="audioInfo">Đang kết nối audio…</div></div>
+      <div class="note">Hãy đeo tai nghe và kiểm tra âm lượng máy trước khi bắt đầu. Khi bấm Bắt đầu, audio sẽ phát ngay.</div>
+      <div class="row"><button class="btn" id="startL" disabled>Bắt đầu Listening</button><button class="btn ghost" id="manualL">Giáo viên tự phát audio (40 phút)</button></div>`;
+    initYT();
+    $('#startL').addEventListener('click',()=>{
+      if(!ytReady) return;
+      S.audio='playing'; S.stage='test';
+      S.deadline=Date.now()+((audioDur||1800)+120)*1000; save();
+      audio=ytp;
+      try{ytp.unMute();ytp.setVolume(Math.round(Number($('#vol').value)*100));ytp.seekTo(0,true);ytp.playVideo();}catch(e){toast('Không phát được audio. Hãy bấm lại.');}
+      render();
+    });
+    $('#manualL').addEventListener('click',()=>{S.audio='manual';S.stage='test';S.deadline=Date.now()+40*60*1000;save();render();});
+  }else if(sec==='R'){
+    c.innerHTML=`<h2>Reading</h2><p>3 passages, 40 câu hỏi, thời gian <b>60 phút</b>. Không có thêm thời gian chép đáp án.</p><p class="sub">Kéo thanh ở giữa để đổi độ rộng bài đọc và câu hỏi. Bôi đen chữ để highlight.</p><div class="row" style="margin-top:16px"><button class="btn" id="go">Bắt đầu Reading</button></div>`;
+    $('#go').addEventListener('click',()=>{S.stage='test';S.deadline=Date.now()+60*60*1000;save();render();});
+  }else if(sec==='W'){
+    c.innerHTML=`<h2>Writing</h2><p>2 tasks, thời gian <b>60 phút</b>. Task 1 ít nhất 150 từ, Task 2 ít nhất 250 từ.</p><p class="sub">Không có kiểm tra chính tả. Số từ hiển thị dưới khung viết.</p><div class="row" style="margin-top:16px"><button class="btn" id="go">Bắt đầu Writing</button></div>`;
+    $('#go').addEventListener('click',()=>{S.stage='test';S.deadline=Date.now()+60*60*1000;save();render();});
+  }
+}
+
+function finishSection(){
+  const sec=S.sec;
+  if(sec==='L'){ if(audio){S.audio='played';try{ytp.stopVideo();}catch(e){} } }
+  S.sec=NEXT[sec]; S.stage='intro'; S.deadline=null; save(); hideMenu(); render();
+}
+$('#submitBtn').addEventListener('click',()=>{
+  const sec=S.sec; let txt='Bạn sẽ không thể quay lại phần này.';
+  if(sec!=='W'){const left=range(1,40).filter(n=>!answered(sec,n)).length; if(left) txt=`Còn ${left} câu chưa trả lời. `+txt;}
+  if(sec==='L'&&S.audio==='playing') txt='Audio vẫn đang phát. '+txt;
+  confirmBox('Nộp phần '+SECNAME[sec]+'?',txt,'Nộp bài',finishSection);
+});
+
+$('#startBtn').addEventListener('click',()=>{S.name=$('#candName').value.trim();S.sec='L';S.stage='intro';save();render();});
+$('#fsBtn').addEventListener('click',()=>{S.fs=S.fs===16?18:S.fs===18?20:16;save();render();});
+
+/* ---------- RESULTS ---------- */
+function grade(sec){
+  const rows=[]; let score=0;
+  for(let n=1;n<=40;n++){
+    const g=groupOf(sec,n);
+    if(g){
+      const u=(S.ans[sec][g[0]+'-'+g[1]]||[]); const mine=u[n===g[0]?0:1]||'';
+      const ok=!!mine&&g[2].includes(mine); if(ok) score++;
+      rows.push({n,mine,key:g[2].join(', ')+' (thứ tự bất kỳ)',ok});
+    }else{
+      const mine=S.ans[sec][n]||''; const ok=!!mine&&KEY[sec][n].some(k=>norm(k)===norm(mine)); if(ok) score++;
+      rows.push({n,mine,key:KEY[sec][n].join(' / '),ok});
+    }
+  }
+  return {rows,score};
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderResults(){
+  const l=grade('L'), r=grade('R');
+  const tbl=g=>`<div class="tablewrap"><table class="ak"><tr><th>Câu</th><th>Bài làm</th><th>Đáp án</th><th></th></tr>${g.rows.map(x=>`<tr class="${x.ok?'':'wrong'}"><td class="n">${x.n}</td><td>${x.mine?esc(x.mine):'<span class="sub">(bỏ trống)</span>'}</td><td>${esc(x.key)}</td><td>${x.ok?'<span class="ok">✓</span>':'<span class="bad">✗</span>'}</td></tr>`).join('')}</table></div>`;
+  const t1=S.ans.W.t1||'', t2=S.ans.W.t2||'';
+  $('#resBox').innerHTML=`<h1>Kết quả · Test 3</h1><p class="sub">${S.name?esc(S.name)+' · ':''}Band Listening và Reading quy đổi theo thang Academic phổ biến. Writing cần giáo viên chấm.</p>
+  <div class="scores">
+    <div class="score"><div class="lab">Listening</div><div class="big">${l.score}/40</div><div class="band">Band ước tính <b>${band(BAND_L,l.score)}</b></div></div>
+    <div class="score"><div class="lab">Reading</div><div class="big">${r.score}/40</div><div class="band">Band ước tính <b>${band(BAND_R,r.score)}</b></div></div>
+    <div class="score"><div class="lab">Writing</div><div class="big">${words(t1)} · ${words(t2)}</div><div class="band">Số từ Task 1 · Task 2</div></div>
+  </div>
+  <h2>Writing Task 1 <span class="sub" style="font-size:14px;font-weight:400">${words(t1)} words${words(t1)<150?' · dưới 150 từ':''}</span></h2>
+  <div class="essay" id="es1">${t1?esc(t1):'<span class="sub">(chưa viết)</span>'}</div><button class="btn ghost" data-copy="t1">Sao chép bài Task 1</button>
+  <h2>Writing Task 2 <span class="sub" style="font-size:14px;font-weight:400">${words(t2)} words${words(t2)<250?' · dưới 250 từ':''}</span></h2>
+  <div class="essay" id="es2">${t2?esc(t2):'<span class="sub">(chưa viết)</span>'}</div><button class="btn ghost" data-copy="t2">Sao chép bài Task 2</button>
+  <h2>Đáp án Listening</h2>${tbl(l)}
+  <h2>Đáp án Reading</h2>${tbl(r)}
+  <div class="row" style="margin:28px 0"><button class="btn" id="again">Làm lại từ đầu</button></div>`;
+  $('#resBox').querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',()=>{
+    const txt=S.ans.W[b.dataset.copy]||'';
+    const fb=()=>{const el=b.previousElementSibling;const rg=document.createRange();rg.selectNodeContents(el);const s=getSelection();s.removeAllRanges();s.addRange(rg);toast('Đã chọn sẵn đoạn văn, nhấn Ctrl/Cmd+C để sao chép.');};
+    try{navigator.clipboard.writeText(txt).then(()=>toast('Đã sao chép.'),fb);}catch(e){fb();}
+  }));
+  $('#again').addEventListener('click',()=>confirmBox('Làm lại từ đầu?','Toàn bộ bài làm hiện tại sẽ bị xóa.','Làm lại',()=>{
+    S=fresh(); save(); Object.values(built).forEach(w=>w.remove()); built={}; audio=null; render();
+  }));
+}
+
+/* ---------- BOOT ---------- */
+if(S.sec==='L'&&S.stage==='test'&&S.audio==='playing'){S.audio='interrupted';save();setTimeout(()=>toast('Trang đã tải lại nên audio bị dừng và không thể nghe lại.',6000),300);}
+render();
+})();
+</script>
+</body>
+</html>
